@@ -1,11 +1,15 @@
 language: ruby
+dist: trusty  # work at Ubuntu 14.04 for install Ruby 1.9.3
 sudo: false
 rvm:
   - 1.9.3
   - 2.0.0
   - 2.1.10
-  - 2.2.6
-  - 2.3.3
-  - 2.4.0
+  - 2.2.10
+  - 2.3.8
+  - 2.4.6
+  - 2.5.5
+  - 2.6.3
+  - 2.7.0-preview1
 script:
     - rspec spec

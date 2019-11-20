@@ -1,3 +1,3 @@
 module AnsibleSpec
-  VERSION = "0.2.22.20180215102337"
+  VERSION = "0.3.20191120110002"
 end

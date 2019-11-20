@@ -1,6 +1,6 @@
 # ansible_spec
 
-[![Gem Version](https://badge.fury.io/rb/ansible_spec.svg)](http://badge.fury.io/rb/ansible_spec)
+[![Gem Version](https://badge.fury.io/rb/ansible_spec.svg)](https://badge.fury.io/rb/ansible_spec)
 [![Build Status](https://travis-ci.org/volanja/ansible_spec.svg?branch=master)](https://travis-ci.org/volanja/ansible_spec)
 
 This is a Ruby gem that implements an Ansible Config Parser for Serverspec.
@@ -155,6 +155,13 @@ Ansible variables supported by following condition.
 * Inventory variables are not supported.
 * Facts are not supported.
 
+## SSH config priority (from v0.2.23)
+
+1. ENV['SSH_CONFIG_FILE'] (high priority)
+1. ssh_args( -F "filename") in [ssh_connection] section of ansible.cfg
+1. user from site.yml
+1. ~/.ssh/config (low priority)
+
 ### Sample
 
 Support variables are in site.yml, group_vars, host_vars, roles.
@@ -277,7 +284,7 @@ sample is [here](https://github.com/volanja/ansible-sample-tdd)
 
 ## Playbook
 
-playbook can use `include`
+playbook can use `import_playbook` & `include[DEPRECATION]`
 
 ```site.yml
 - name: Ansible-Sample-TDD

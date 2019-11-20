@@ -400,6 +400,229 @@ EOF
     end
   end
 
+  context 'load_targets:Test invalid return_type' do
+    tmp_hosts = 'hosts'
+    content_excpetion_msg = "Variable return_type must be value 'groups' or 'groups_parent_child_relationships'"
+    before do
+      content_h = <<'EOF'
+[server]
+192.168.0.103
+192.168.0.104 ansible_ssh_port=22
+
+[databases]
+192.168.0.105
+192.168.0.106 ansible_ssh_port=5555
+
+[pg:children]
+server
+databases
+EOF
+      create_file(tmp_hosts,content_h)
+      begin
+        @res = AnsibleSpec.load_targets(tmp_hosts, return_type='some_invalid_option')
+      rescue ArgumentError => e
+        @res = e.message
+      end
+    end
+
+    it 'res is string' do
+      expect(@res.instance_of?(String)).to be_truthy
+    end
+
+    it 'exist 1 string' do
+      expect(@res.length).to eq content_excpetion_msg.length
+    end
+
+    it 'exist string' do
+      expect(@res).to include(content_excpetion_msg)
+    end
+
+    after do
+      File.delete(tmp_hosts)
+    end
+  end
+
+  context 'load_targets:Return groups; default return_type (="groups")' do
+    tmp_hosts = 'hosts'
+    before do
+      content_h = <<'EOF'
+[server]
+192.168.0.103
+192.168.0.104 ansible_ssh_port=22
+
+[databases]
+192.168.0.105
+192.168.0.106 ansible_ssh_port=5555
+
+[pg:children]
+server
+databases
+EOF
+      create_file(tmp_hosts,content_h)
+      @res = AnsibleSpec.load_targets(tmp_hosts)
+    end
+
+    it 'res is hash' do
+      expect(@res.instance_of?(Hash)).to be_truthy
+    end
+
+    it 'exist 1 group' do
+      expect(@res.length).to eq 3
+    end
+
+    it 'exist group' do
+      expect(@res.key?('server')).to be_truthy
+      expect(@res.key?('databases')).to be_truthy
+      expect(@res.key?('pg')).to be_truthy
+      expect(@res.key?('pg:children')).not_to be_truthy
+    end
+
+    it 'pg 192.168.0.103' do
+      obj = @res['pg'][0]
+      expect(obj.instance_of?(Hash)).to be_truthy
+      expect(obj).to include({'name' => '192.168.0.103',
+                              'uri' => '192.168.0.103',
+                              'port' => 22})
+    end
+
+    it 'pg 192.168.0.104 ansible_ssh_port=22' do
+      obj = @res['pg'][1]
+      expect(obj.instance_of?(Hash)).to be_truthy
+      expect(obj['name']).to eq '192.168.0.104 ansible_ssh_port=22'
+      expect(obj['uri']).to eq '192.168.0.104'
+      expect(obj['port']).to eq 22
+    end
+
+    it 'pg 192.168.0.105' do
+      obj = @res['pg'][2]
+      expect(obj.instance_of?(Hash)).to be_truthy
+      expect(obj).to include({'name' => '192.168.0.105',
+                              'uri' => '192.168.0.105',
+                              'port' => 22})
+    end
+
+    it 'pg 192.168.0.106 ansible_ssh_port=5555' do
+      obj = @res['pg'][3]
+      expect(obj.instance_of?(Hash)).to be_truthy
+      expect(obj['name']).to eq '192.168.0.106 ansible_ssh_port=5555'
+      expect(obj['uri']).to eq '192.168.0.106'
+      expect(obj['port']).to eq 5555
+    end
+
+    after do
+      File.delete(tmp_hosts)
+    end
+  end
+
+  context 'load_targets:Return groups; return_type="groups"' do
+    tmp_hosts = 'hosts'
+    before do
+      content_h = <<'EOF'
+[server]
+192.168.0.103
+192.168.0.104 ansible_ssh_port=22
+
+[databases]
+192.168.0.105
+192.168.0.106 ansible_ssh_port=5555
+
+[pg:children]
+server
+databases
+EOF
+      create_file(tmp_hosts,content_h)
+      @res = AnsibleSpec.load_targets(tmp_hosts, return_type='groups')
+    end
+
+    it 'res is hash' do
+      expect(@res.instance_of?(Hash)).to be_truthy
+    end
+
+    it 'exist 1 group' do
+      expect(@res.length).to eq 3
+    end
+
+    it 'exist group' do
+      expect(@res.key?('server')).to be_truthy
+      expect(@res.key?('databases')).to be_truthy
+      expect(@res.key?('pg')).to be_truthy
+      expect(@res.key?('pg:children')).not_to be_truthy
+    end
+
+    it 'pg 192.168.0.103' do
+      obj = @res['pg'][0]
+      expect(obj.instance_of?(Hash)).to be_truthy
+      expect(obj).to include({'name' => '192.168.0.103',
+                              'uri' => '192.168.0.103',
+                              'port' => 22})
+    end
+
+    it 'pg 192.168.0.104 ansible_ssh_port=22' do
+      obj = @res['pg'][1]
+      expect(obj.instance_of?(Hash)).to be_truthy
+      expect(obj['name']).to eq '192.168.0.104 ansible_ssh_port=22'
+      expect(obj['uri']).to eq '192.168.0.104'
+      expect(obj['port']).to eq 22
+    end
+
+    it 'pg 192.168.0.105' do
+      obj = @res['pg'][2]
+      expect(obj.instance_of?(Hash)).to be_truthy
+      expect(obj).to include({'name' => '192.168.0.105',
+                              'uri' => '192.168.0.105',
+                              'port' => 22})
+    end
+
+    it 'pg 192.168.0.106 ansible_ssh_port=5555' do
+      obj = @res['pg'][3]
+      expect(obj.instance_of?(Hash)).to be_truthy
+      expect(obj['name']).to eq '192.168.0.106 ansible_ssh_port=5555'
+      expect(obj['uri']).to eq '192.168.0.106'
+      expect(obj['port']).to eq 5555
+    end
+
+    after do
+      File.delete(tmp_hosts)
+    end
+  end
+
+  context 'load_targets:Return groups parent child relationships; return_type="groups_parent_child_relationships"' do
+    tmp_hosts = 'hosts'
+    before do
+      content_h = <<'EOF'
+[server]
+192.168.0.103
+192.168.0.104 ansible_ssh_port=22
+
+[databases]
+192.168.0.105
+192.168.0.106 ansible_ssh_port=5555
+
+[pg:children]
+server
+databases
+EOF
+      create_file(tmp_hosts,content_h)
+      @res = AnsibleSpec.load_targets(tmp_hosts, return_type='groups_parent_child_relationships')
+    end
+
+    it 'res is hash' do
+      expect(@res.instance_of?(Hash)).to be_truthy
+    end
+
+    it 'exist 1 group parent child relationship in Hash' do
+      expect(@res.length).to eq 1
+    end
+
+    it 'exist each pair' do
+      expect(@res).to include({"pg"=>["server", "databases"]})
+    end
+
+    after do
+      File.delete(tmp_hosts)
+    end
+  end
+
 end
 
 describe "load_playbookの実行" do
@@ -570,22 +793,23 @@ EOF
     end
   end
 
-  context '正常系(include)' do
-    require 'yaml'
-    tmp_pb = 'site.yml'
-    tmp_inc = 'nginx.yml'
-    before do
-      content_pb = <<'EOF'
+  %w[include import_playbook].each do |action|
+    context "正常系(#{action})" do
+      require 'yaml'
+      tmp_pb = 'site.yml'
+      tmp_inc = 'nginx.yml'
+      before do
+        content_pb = <<"EOF"  # ヒアドキュメント内で変数展開する時は""(double quote)で囲む。
 - name: Ansible-Sample-TDD
   hosts: server
   user: root
   roles:
     - mariadb
-- include: nginx.yml
+- #{action}: nginx.yml
 EOF
-      create_file(tmp_pb,content_pb)
+        create_file(tmp_pb,content_pb)
 
-      content_inc = <<'EOF'
+        content_inc = <<'EOF'
 - name: Ansible-Nginx
   hosts: web
   user: nginx
@@ -598,87 +822,88 @@ EOF
   roles:
    - nginx-proxy
 EOF
-      create_file(tmp_inc,content_inc)
+        create_file(tmp_inc,content_inc)
 
-      @res = AnsibleSpec.load_playbook(tmp_pb)
-    end
+        @res = AnsibleSpec.load_playbook(tmp_pb)
+      end
 
-    it 'res is array' do
-      expect(@res.instance_of?(Array)).to be_truthy
-    end
+      it 'res is array' do
+        expect(@res.instance_of?(Array)).to be_truthy
+      end
 
-    it 'res has three groups' do
-      expect(@res.length).to eq 3
-    end
+      it 'res has three groups' do
+        expect(@res.length).to eq 3
+      end
 
 
-    it 'res is hash' do
-      expect(@res[0].instance_of?(Hash)).to be_truthy
-    end
+      it 'res is hash' do
+        expect(@res[0].instance_of?(Hash)).to be_truthy
+      end
 
-    it 'check 1 group' do
-      expect(@res[0].length).to eq 4
-    end
+      it 'check 1 group' do
+        expect(@res[0].length).to eq 4
+      end
 
-    it 'exist name' do
-      expect(@res[0].key?('name')).to be_truthy
-      expect(@res[0]['name']).to eq 'Ansible-Sample-TDD'
-    end
+      it 'exist name' do
+        expect(@res[0].key?('name')).to be_truthy
+        expect(@res[0]['name']).to eq 'Ansible-Sample-TDD'
+      end
 
-    it 'exist hosts' do
-      expect(@res[0].key?('hosts')).to be_truthy
-      expect(@res[0]['hosts']).to eq 'server'
-    end
+      it 'exist hosts' do
+        expect(@res[0].key?('hosts')).to be_truthy
+        expect(@res[0]['hosts']).to eq 'server'
+      end
 
-    it 'exist user' do
-      expect(@res[0].key?('user')).to be_truthy
-      expect(@res[0]['user']).to eq 'root'
-    end
+      it 'exist user' do
+        expect(@res[0].key?('user')).to be_truthy
+        expect(@res[0]['user']).to eq 'root'
+      end
 
-    it 'exist roles' do
-      expect(@res[0].key?('roles')).to be_truthy
-      expect(@res[0]['roles'].instance_of?(Array)).to be_truthy
-      expect(@res[0]['roles'][0]).to eq 'mariadb'
-    end
+      it 'exist roles' do
+        expect(@res[0].key?('roles')).to be_truthy
+        expect(@res[0]['roles'].instance_of?(Array)).to be_truthy
+        expect(@res[0]['roles'][0]).to eq 'mariadb'
+      end
 
-    # - include: nginx.yml
-    it 'res is hash' do
-      expect(@res[1].instance_of?(Hash)).to be_truthy
-    end
+      # - include: nginx.yml
+      it 'res is hash' do
+        expect(@res[1].instance_of?(Hash)).to be_truthy
+      end
 
-    it 'check 1 group' do
-      expect(@res[1].length).to eq 4
-    end
+      it 'check 1 group' do
+        expect(@res[1].length).to eq 4
+      end
 
-    it 'exist name' do
-      expect(@res[1].key?('name')).to be_truthy
-      expect(@res[1]['name']).to eq 'Ansible-Nginx'
-    end
+      it 'exist name' do
+        expect(@res[1].key?('name')).to be_truthy
+        expect(@res[1]['name']).to eq 'Ansible-Nginx'
+      end
 
-    it 'exist hosts' do
-      expect(@res[1].key?('hosts')).to be_truthy
-      expect(@res[1]['hosts']).to eq 'web'
-    end
+      it 'exist hosts' do
+        expect(@res[1].key?('hosts')).to be_truthy
+        expect(@res[1]['hosts']).to eq 'web'
+      end
 
-    it 'exist user' do
-      expect(@res[1].key?('user')).to be_truthy
-      expect(@res[1]['user']).to eq 'nginx'
-    end
+      it 'exist user' do
+        expect(@res[1].key?('user')).to be_truthy
+        expect(@res[1]['user']).to eq 'nginx'
+      end
 
-    it 'exist roles' do
-      expect(@res[1].key?('roles')).to be_truthy
-      expect(@res[1]['roles'].instance_of?(Array)).to be_truthy
-      expect(@res[1]['roles'][0]).to eq 'nginx'
-    end
+      it 'exist roles' do
+        expect(@res[1].key?('roles')).to be_truthy
+        expect(@res[1]['roles'].instance_of?(Array)).to be_truthy
+        expect(@res[1]['roles'][0]).to eq 'nginx'
+      end
 
-    it 'exist name' do
-      expect(@res[2].key?('name')).to be_truthy
-      expect(@res[2]['name']).to eq 'Ansible-Nginx2'
-    end
+      it 'exist name' do
+        expect(@res[2].key?('name')).to be_truthy
+        expect(@res[2]['name']).to eq 'Ansible-Nginx2'
+      end
 
-    after do
-      File.delete(tmp_pb)
-      File.delete(tmp_inc)
+      after do
+        File.delete(tmp_pb)
+        File.delete(tmp_inc)
+      end
     end
   end
 
@@ -1306,16 +1531,20 @@ EOF
       expect(@res[0]['hosts'].instance_of?(Array)).to be_truthy
       expect([{'name' => '192.168.0.103',
                'uri' => '192.168.0.103',
-               'port' => 22},
+               'port' => 22,
+               'connection' => 'ssh'},
               {'name' => '192.168.0.104',
                'uri' => '192.168.0.104',
-               'port' => 22},
+               'port' => 22,
+               'connection' => 'ssh'},
               {'name' => '192.168.0.105',
                'uri' => '192.168.0.105',
-               'port' => 22},
+               'port' => 22,
+               'connection' => 'ssh'},
               {'name' => '192.168.0.106',
                'uri' => '192.168.0.106',
-               'port' => 22}]).to match_array(@res[0]['hosts'])
+               'port' => 22,
+               'connection' => 'ssh'}]).to match_array(@res[0]['hosts'])
     end
 
     it 'exist user' do
@@ -1451,18 +1680,22 @@ EOF
       expect([{'name' => '192.168.0.103',
                'uri' => '192.168.0.103',
                'port' => 22,
+               'connection' => 'ssh',
                'hosts'=>'server'},
               {'name' => '192.168.0.104',
                'uri' => '192.168.0.104',
                'port' => 22,
+               'connection' => 'ssh',
                'hosts'=>'server'},
               {'name' => '192.168.0.105',
                'uri' => '192.168.0.105',
                'port' => 22,
+               'connection' => 'ssh',
                'hosts'=>'server2'},
               {'name' => '192.168.0.106',
                'uri' => '192.168.0.106',
                'port' => 22,
+               'connection' => 'ssh',
                'hosts'=>'server2'}]).to match_array(@res[0]['hosts'])
     end
 
